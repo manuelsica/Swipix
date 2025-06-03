@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Sezione Hero -->
+    <section class="hero-section">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="container text-center">
+                <h1 class="display-4 fw-bold mb-4">Scopri il tuo prossimo film preferito</h1>
+                <p class="lead mb-4">Passa a destra per mettere mi piace, a sinistra per scartare. Trova i film che adorerai.</p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-film"></i>
+                        <span>{{ movies|length }} Film Disponibili</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-heart"></i>
+                        <span id="hero-liked-count">{{ liked_count }} Mi Piace</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sezione Card dei Film -->
+    <section class="cards-section py-5">
+        <div class="container">
+            {% if movies %}
+                <!-- Istruzioni -->
+                <div class="instructions-card mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="mb-2">Come funziona</h5>
+                            <p class="mb-0">Passa a destra <i class="fas fa-heart text-danger"></i> per mettere mi piace a un film, passa a sinistra <i class="fas fa-times text-muted"></i> per scartarlo. Puoi anche usare i pulsanti sotto ogni card.</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-outline-light btn-sm" onclick="resetPreferences()">
+                                <i class="fas fa-refresh me-1"></i>Reimposta tutto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenitore dello Stack di Card -->
+                <div class="card-stack-container">
+                    <div class="card-stack" id="cardStack">
+                        {% for movie in movies %}
+                        <div class="movie-card" data-movie-id="{{ movie.id }}">
+                            <div class="movie-poster">
+                                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" loading="lazy">
+                                <div class="movie-rating">
+                                    <i class="fas fa-star"></i>
+                                    <span>{{ movie.rating }}</span>
+                                </div>
+                            </div>
+
+                            <div class="movie-info">
+                                <h3 class="movie-title">{{ movie.title }}</h3>
+                                <div class="movie-meta">
+                                    <span class="genre">{{ movie.genre }}</span>
+                                    <span class="year">{{ movie.year }}</span>
+                                    <span class="duration">{{ movie.duration }}min</span>
+                                </div>
+                                <p class="movie-description">{{ movie.description }}</p>
+                                <div class="movie-director">
+                                    <i class="fas fa-user-tie me-1"></i>
+                                    Diretto da {{ movie.director }}
+                                </div>
+                            </div>
+
+                            <!-- Pulsanti di Azione -->
+                            {% if current_user.is_authenticated %}
+                            <div class="card-actions">
+                                <button class="btn btn-dislike" onclick="rateMovie({{ movie.id }}, false)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button class="btn btn-like" onclick="rateMovie({{ movie.id }}, true)">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                            </div>
+                            {% else %}
+                            <div class="card-actions">
+                                <div class="login-prompt">
+                                    <p class="mb-2"><i class="fas fa-lock me-2"></i>Effettua il login per valutare i film</p>
+                                    <a href="{{ url_for('auth.login') }}" class="btn_login btn-danger btn-sm me-2">
+                                        <i class="fas fa-sign-in-alt me-1"></i>Accedi
+                                    </a>
+                                    <a href="{{ url_for('auth.register') }}" class="btn_register btn-outline-light btn-sm">
+                                        <i class="fas fa-user-plus me-1"></i>Registrati
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Indicatori di Swipe -->
+                            <div class="swipe-indicator like-indicator">
+                                <i class="fas fa-heart"></i>
+                                <span>MI PIACE</span>
+                            </div>
+                            <div class="swipe-indicator dislike-indicator">
+                                <i class="fas fa-times"></i>
+                                <span>PASSA</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Stato Vuoto -->
+                    <div class="empty-state" id="emptyState" {% if movies %}style="display: none;"{% endif %}>
+                        <div class="text-center">
+                            <i class="fas fa-film-canister mb-3"></i>
+                            <h4>Hai valutato tutto!</h4>
+                            <p class="text-white">Hai valutato tutti i film disponibili! Guarda i tuoi film preferiti o rimuovi i like/dislike per ricominciare.</p>
+                            <div class="mt-4">
+                                <a href="{{ url_for('liked_movies') }}" class="btn btn-danger me-2">
+                                    <i class="fas fa-heart me-1"></i>Film Preferiti
+                                </a>
+                                <button class="btn btn-outline-light" onclick="resetPreferences()">
+                                    <i class="fas fa-refresh me-1"></i>Ricomincia
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Stato Nessun Film -->
+                <div class="empty-state">
+                    <div class="text-center">
+                        <i class="fas fa-film-canister mb-3"></i>
+                        <h4>Nessun film disponibile</h4>
+                        <p class="text-white">Non ci sono film da mostrare al momento. Riprova più tardi.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<!-- Overlay di Caricamento -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner">
+        <i class="fas fa-film"></i>
+    </div>
+</div>
+
+<!-- Toast di Successo -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="successToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong class="me-auto">Film Valutato</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+            Film valutato con successo!
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Inizializza la funzionalità di swipe
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSwipe();
+});
+</script>
+{% endblock %}

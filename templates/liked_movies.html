@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}Film Preferiti - Swipix{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Hero Section -->
+    <section class="hero-section liked-hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="container text-center">
+                <h1 class="display-4 fw-bold mb-4">
+                    <i class="fas fa-heart text-danger me-3"></i>
+                    I Tuoi Film Preferiti
+                </h1>
+                <p class="lead mb-4">Ecco tutti i film che hai segnato come preferiti!</p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-heart"></i>
+                        <span>{{ movies|length }} Film Amati</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Movies Grid Section -->
+    <section class="movies-grid-section py-5">
+        <div class="container">
+            {% if movies %}
+                <div class="movies-grid">
+                    {% for movie in movies %}
+                    <div class="movie-grid-card" data-movie-id="{{ movie.id }}">
+                        <div class="movie-grid-poster">
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" loading="lazy">
+                            <div class="movie-grid-overlay">
+                                <div class="movie-grid-actions">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="removePreference({{ movie.id }}, this)" title="Rimuovi dai preferiti">
+                                        <i class="fas fa-heart-broken"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="movie-grid-rating">
+                                <i class="fas fa-star"></i>
+                                <span>{{ movie.rating }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="movie-grid-info">
+                            <h5 class="movie-grid-title">{{ movie.title }}</h5>
+                            <div class="movie-grid-meta">
+                                <span class="genre">{{ movie.genre }}</span>
+                                <span class="year">{{ movie.year }}</span>
+                            </div>
+                            <p class="movie-grid-description">{{ movie.description[:100] }}{% if movie.description|length > 100 %}...{% endif %}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="text-center mt-5">
+                    <a href="{{ url_for('index') }}" class="btn btn-danger btn-lg">
+                        <i class="fas fa-plus me-2"></i>Scopri Altri Film
+                    </a>
+                </div>
+            {% else %}
+                <!-- Empty State -->
+                <div class="empty-state">
+                    <div class="text-center">
+                        <i class="fas fa-heart-broken mb-3"></i>
+                        <h4>Nessun Film Preferito</h4>
+                        <p class="text-white">Non hai ancora aggiunto film ai tuoi preferiti. Inizia a esplorare e trova i film che ami!</p>
+                        <div class="mt-4">
+                            <a href="{{ url_for('index') }}" class="btn btn-danger btn-lg">
+                                <i class="fas fa-search me-2"></i>Inizia a Esplorare
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function removePreference(movieId, button) {
+    if (!confirm('Sei sicuro di voler rimuovere questo film dai preferiti?')) {
+        return;
+    }
+    
+    // Show loading state
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    button.disabled = true;
+    
+    fetch(`/remove_preference/${movieId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove the movie card with animation
+            const movieCard = button.closest('.movie-grid-card');
+            movieCard.style.transform = 'scale(0.8)';
+            movieCard.style.opacity = '0';
+            movieCard.style.transition = 'all 0.3s ease';
+            
+            setTimeout(() => {
+                movieCard.remove();
+                
+                // Check if no movies left
+                const remainingMovies = document.querySelectorAll('.movie-grid-card').length;
+                if (remainingMovies === 0) {
+                    location.reload(); // Reload to show empty state
+                }
+            }, 300);
+            
+            // Show success message
+            showToast(data.message || 'Preferenza rimossa!', 'success');
+            
+            // Update liked count in navigation
+            updateLikedCount();
+        } else {
+            // Restore button state
+            button.innerHTML = originalContent;
+            button.disabled = false;
+            showToast('Errore nella rimozione della preferenza', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Restore button state
+        button.innerHTML = originalContent;
+        button.disabled = false;
+        showToast('Errore di rete', 'error');
+    });
+}
+
+function updateLikedCount() {
+    // Update the liked count in navigation
+    fetch('/')
+    .then(response => response.text())
+    .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newCount = doc.querySelector('#liked-count');
+        if (newCount) {
+            const currentCount = document.querySelector('#liked-count');
+            if (currentCount) {
+                currentCount.textContent = newCount.textContent;
+            }
+        }
+    })
+    .catch(error => console.error('Error updating count:', error));
+}
+
+function showToast(message, type = 'success') {
+    // Create toast if it doesn't exist
+    if (!document.getElementById('successToast')) {
+        const toastHtml = `
+            <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                <div id="successToast" class="toast" role="alert">
+                    <div class="toast-header">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong class="me-auto">Notifica</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body" id="toastMessage">
+                        ${message}
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', toastHtml);
+    }
+    
+    const toast = document.getElementById('successToast');
+    const toastMessage = document.getElementById('toastMessage');
+    const toastIcon = toast.querySelector('.toast-header i');
+    
+    toastMessage.textContent = message;
+    
+    // Update icon based on type
+    if (type === 'error') {
+        toastIcon.className = 'fas fa-exclamation-circle text-danger me-2';
+    } else {
+        toastIcon.className = 'fas fa-check-circle text-success me-2';
+    }
+    
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+</script>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+.liked-hero {
+    background: linear-gradient(135deg, #DC143C 0%, var(--netflix-dark-red) 100%);
+    height: 40vh;
+    min-height: 300px;
+}
+
+.movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.movie-grid-card {
+    background: hsl(var(--background-card));
+    border-radius: 15px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid hsl(var(--border-color));
+}
+
+.movie-grid-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px hsla(var(--shadow-color));
+}
+
+.movie-grid-poster {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.movie-grid-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.movie-grid-card:hover .movie-grid-poster img {
+    transform: scale(1.05);
+}
+
+.movie-grid-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.movie-grid-card:hover .movie-grid-overlay {
+    opacity: 1;
+}
+
+.movie-grid-actions .btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.movie-grid-rating {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.movie-grid-rating i {
+    color: #FFD700;
+    font-size: 0.7rem;
+}
+
+.movie-grid-info {
+    padding: 1.5rem;
+}
+
+.movie-grid-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: hsl(var(--text-primary));
+}
+
+.movie-grid-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.movie-grid-meta span {
+    font-size: 0.8rem;
+    color: hsl(var(--text-secondary));
+    background: hsl(var(--background-secondary));
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.movie-grid-meta .genre {
+    color: var(--netflix-red);
+    background: rgba(229, 9, 20, 0.1);
+}
+
+.movie-grid-description {
+    font-size: 0.9rem;
+    color: hsl(var(--text-secondary));
+    line-height: 1.4;
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .movie-grid-info {
+        padding: 1rem;
+    }
+    
+    .liked-hero {
+        height: 30vh;
+        min-height: 250px;
+    }
+}
+
+@media (max-width: 480px) {
+    .movies-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}

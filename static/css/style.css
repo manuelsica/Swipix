@@ -1,0 +1,691 @@
+:root {
+    /* Color palette principale */
+    --netflix-red: #E50914;            /* Rosso Netflix */
+    --netflix-dark-red: #B20610;       /* Rosso scuro Netflix */
+    --background-primary: 0 0% 8%;     /* Colore di sfondo principale (#141414) */
+    --background-secondary: 0 0% 12%;  /* Colore di sfondo secondario (#1F1F1F) */
+    --background-card: 0 0% 15%;       /* Colore di sfondo delle card (#262626) */
+    --text-primary: 0 0% 100%;         /* Colore testo principale (#FFFFFF) */
+    --text-secondary: 0 0% 70%;        /* Colore testo secondario (#B3B3B3) */
+    --text-muted: 0 0% 50%;            /* Colore testo mutato (#808080) */
+    --border-color: 0 0% 25%;          /* Colore bordo (#404040) */
+    --shadow-color: 0 0% 0% / 0.3;     /* Colore ombra con opacità */
+    /* Gradiente per sovrapposizione sfumata */
+    --gradient-overlay: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.8) 0%,
+        rgba(0, 0, 0, 0.4) 100%
+    );
+}
+
+/* Stili base per tutti gli elementi */
+* {
+    box-sizing: border-box;  /* Imposta box model a border-box */
+}
+
+/* Impostazioni iniziali per html e body */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    /* Font predefinito e sfondo scuro */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: hsl(var(--background-primary));
+    color: hsl(var(--text-primary));
+    line-height: 1.6;
+    overflow-x: hidden;      /* Previene lo scroll orizzontale indesiderato */
+}
+
+/* Tipografia: intestazioni H1–H6 */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+}
+
+/* Classe per titoli molto grandi */
+.display-4 {
+    font-weight: 700;
+}
+
+/* Navigazione (navbar) */
+.navbar {
+    background: rgba(0, 0, 0, 0.95);        /* Sfondo quasi nero con trasparenza */
+    backdrop-filter: blur(10px);            /* Effetto blur dietro la navbar */
+    border-bottom: 1px solid hsl(var(--border-color));
+    padding: 1rem 0;                        /* Spaziatura verticale */
+    z-index: 1000;                          /* Sovrappone contenuti sottostanti */
+}
+
+/* Brand della navbar (logo/testo principale) */
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: hsl(var(--text-primary)) !important;
+    text-decoration: none;
+}
+
+.navbar-brand:hover {
+    color: var(--netflix-red) !important;
+}
+
+/* Link di navigazione */
+.nav-link {
+    color: hsl(var(--text-secondary)) !important;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: hsl(var(--text-primary)) !important;
+}
+
+/* Badge utilizzati in vari punti */
+.badge {
+    font-size: 0.75rem;
+}
+
+/* Stili per i menu a tendina (dropdown) */
+.dropdown-menu {
+    background: hsl(var(--background-card));
+    border: 1px solid hsl(var(--border-color));
+    border-radius: 10px;
+    box-shadow: 0 10px 25px hsla(var(--shadow-color));
+}
+
+.dropdown-item {
+    color: hsl(var(--text-secondary));
+    transition: all 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background: hsl(var(--background-secondary));
+    color: hsl(var(--text-primary));
+}
+
+/* Contenuto principale */
+.main-content {
+    margin-top: 76px;                            /* Compensa altezza navbar */
+    min-height: calc(100vh - 76px);              /* Occupa il resto della finestra */
+}
+
+/* Sezione Hero (banner iniziale) */
+.hero-section {
+    position: relative;
+    height: 60vh;
+    min-height: 400px;
+    background: linear-gradient(
+        135deg,
+        var(--netflix-red) 0%,
+        var(--netflix-dark-red) 100%
+    );
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Immagine di sfondo leggermente opaca */
+    background: url('https://pixabay.com/get/g25b555bbea261e777cf4d1b9b33039bf1562f7ab5a1ca607bbb0446497f130056ec34e3adc21bc1dd738fb8fca1435886d99cb2350e7481129a6c86171103046_1280.jpg')
+                center/cover;
+    opacity: 0.3;
+    z-index: 1;
+}
+
+/* Sovrapposizione sfumata sopra l'immagine */
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--gradient-overlay);
+    z-index: 2;
+}
+
+/* Contenuto testuale e pulsanti all'interno dell'Hero */
+.hero-content {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+}
+
+/* Statistiche o badge nella sezione Hero */
+.hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-top: 2rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.stat-item i {
+    font-size: 1.2rem;
+    color: var(--netflix-red);  /* Icone con colore rosso distintivo */
+}
+
+/* Card delle istruzioni o descrizioni */
+.instructions-card {
+    background: hsl(var(--background-secondary));
+    border: 1px solid hsl(var(--border-color));
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Contenitore per la pila di card (swipe) */
+.card-stack-container {
+    display: flex;
+    justify-content: center;
+    min-height: 600px;
+    position: relative;
+}
+
+.card-stack {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    height: 600px;
+}
+
+/* Stile base per ogni card di un film */
+.movie-card {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: hsl(var(--background-card));
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px hsla(var(--shadow-color));
+    cursor: grab;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid hsl(var(--border-color));
+    user-select: none;  /* Disabilita la selezione del testo durante il drag */
+}
+
+.movie-card:hover {
+    /* Leggera sollevata al passaggio del mouse */
+    transform: translateY(-5px);
+    box-shadow: 0 25px 50px hsla(var(--shadow-color));
+}
+
+.movie-card.dragging {
+    cursor: grabbing;
+    transition: none;    /* Disabilita transizioni per un drag fluido */
+    z-index: 10;         /* Porta la card in primo piano */
+}
+
+.movie-card.swiping-right {
+    /* Anteprima animazione swipe a destra */
+    transform: translateX(100px) rotate(15deg);
+}
+
+.movie-card.swiping-left {
+    /* Anteprima animazione swipe a sinistra */
+    transform: translateX(-100px) rotate(-15deg);
+}
+
+/* Sezione poster del film all'interno della card */
+.movie-poster {
+    position: relative;
+    height: 250px;
+    overflow: hidden;
+}
+
+.movie-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;     /* Ritaglia e centra l'immagine */
+    transition: transform 0.3s ease;
+}
+
+.movie-card:hover .movie-poster img {
+    /* Effetto zoom sul passaggio del mouse */
+    transform: scale(1.05);
+}
+
+/* Etichetta della valutazione del film (stelle, punteggio) */
+.movie-rating {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.movie-rating i {
+    color: #FFD700;      /* Icona stella di colore giallo */
+    font-size: 0.8rem;
+}
+
+/* Sezione informazioni generali del film */
+.movie-info {
+    padding: 1.5rem;
+    flex: 1;
+}
+
+.movie-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: hsl(var(--text-primary));
+}
+
+/* Meta informazioni (genere, anno, durata) */
+.movie-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.movie-meta span {
+    font-size: 0.9rem;
+    color: hsl(var(--text-secondary));
+    background: hsl(var(--background-secondary));
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.movie-meta .genre {
+    color: var(--netflix-red);
+    background: rgba(229, 9, 20, 0.1);
+}
+
+/* Descrizione del film (sintetizzata con troncamento) */
+.movie-description {
+    font-size: 0.95rem;
+    color: hsl(var(--text-secondary));
+    margin-bottom: 1rem;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;         /* Limita a 3 righe */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Nome del regista in corsivo e colore mutato */
+.movie-director {
+    font-size: 0.9rem;
+    color: hsl(var(--text-muted));
+    font-style: italic;
+}
+
+/* Sezione pulsanti di azione nella card */
+.card-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: hsl(var(--background-secondary));
+}
+
+/* Messaggio di invito al login se anonimo */
+.login-prompt {
+    text-align: center;
+    color: hsl(var(--text-secondary));
+}
+
+.login-prompt p {
+    font-size: 0.9rem;
+    color: hsl(var(--text-muted));
+}
+
+/* Pulsanti circolari per like, dislike e info */
+.card-actions .btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-dislike {
+    background: #666;
+    color: white;
+}
+
+.btn-dislike:hover {
+    background: #FF4458;  /* Colore rosso chiaro su hover */
+    transform: scale(1.1);
+}
+
+.btn-info {
+    background: #333;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #0084FF;  /* Colore blu su hover */
+    transform: scale(1.1);
+}
+
+.btn-like {
+    background: var(--netflix-red);
+    color: white;
+}
+
+.btn-like:hover {
+    background: var(--netflix-dark-red);
+    transform: scale(1.1);
+}
+
+/* Indicatori di swipe (like / dislike) */
+.swipe-indicator {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1.2rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.like-indicator {
+    right: 20px;
+    background: rgba(76, 175, 80, 0.9);  /* Verde per like */
+    color: white;
+    border: 3px solid #4CAF50;
+}
+
+.dislike-indicator {
+    left: 20px;
+    background: rgba(244, 67, 54, 0.9);  /* Rosso per dislike */
+    color: white;
+    border: 3px solid #F44336;
+}
+
+/* Quando la card è in swipe a destra/sinistra, mostra l'indicatore */
+.movie-card.swiping-right .like-indicator,
+.movie-card.swiping-left .dislike-indicator {
+    opacity: 1;
+}
+
+/* Stato vuoto: mostra un messaggio se non ci sono più card */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    max-width: 500px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: hsl(var(--text-muted));
+    margin-bottom: 1rem;
+}
+
+.empty-state h4 {
+    color: hsl(var(--text-primary));
+    margin-bottom: 1rem;
+}
+
+/* Overlay di caricamento a schermo intero */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;                /* Di default nascosto */
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    color: var(--netflix-red);
+    font-size: 3rem;
+    animation: spin 1s linear infinite;
+}
+
+/* Animazione rotazione per spinner */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Pulsanti di sistema */
+.btn-danger {
+    background: var(--netflix-red);
+    border-color: var(--netflix-red);
+}
+
+.btn-danger:hover {
+    background: var(--netflix-dark-red);
+    border-color: var(--netflix-dark-red);
+}
+
+.btn-outline-light {
+    border-color: hsl(var(--border-color));
+    color: hsl(var(--text-secondary));
+}
+
+.btn-outline-light:hover {
+    background: hsl(var(--text-primary));
+    color: hsl(var(--background-primary));
+    border-color: hsl(var(--text-primary));
+}
+
+/* Pulsante “Accedi” */
+a.btn_login.btn-danger.btn-sm.me-2 {
+    background: var(--netflix-red);
+    border: none;
+    color: hsl(var(--text-primary));
+    border-radius: 4px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none;
+}
+
+a.btn_login.btn-danger.btn-sm.me-2:hover,
+a.btn_login.btn-danger.btn-sm.me-2:focus {
+    background: var(--netflix-dark-red);
+    color: hsl(var(--text-primary));
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none;
+}
+
+/* Pulsante “Registrati” */
+a.btn_register.btn-outline-light.btn-sm {
+    background: transparent;
+    border: 1px solid hsl(var(--border-color));
+    color: hsl(var(--text-secondary));
+    border-radius: 4px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none;
+}
+
+a.btn_register.btn-outline-light.btn-sm:hover,
+a.btn_register.btn-outline-light.btn-sm:focus {
+    background: hsl(var(--text-primary));
+    color: hsl(var(--background-primary));
+    border-color: hsl(var(--text-primary));
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none;
+}
+
+.me-auto {
+    margin-right: auto !important;
+    color: white;
+}
+/* Stile per i toast di notifica */
+.toast {
+    background: hsl(var(--background-card));
+    border: 1px solid hsl(var(--border-color));
+    color: hsl(var(--text-primary));
+}
+
+.toast-header {
+    background: hsl(var(--background-secondary));
+    border-bottom: 1px solid hsl(var(--border-color));
+}
+
+/* Footer */
+.footer {
+    background: hsl(var(--background-secondary));
+    border-top: 1px solid hsl(var(--border-color));
+    color: hsl(var(--text-secondary));
+}
+
+.footer-links a {
+    color: hsl(var(--text-muted));
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: hsl(var(--text-secondary));
+}
+
+/* Design responsivo per tablet e dispositivi di media dimensione */
+@media (max-width: 768px) {
+    .hero-section {
+        height: 50vh;
+        min-height: 300px;
+    }
+
+    .hero-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .card-stack {
+        max-width: 350px;
+        height: 550px;
+    }
+
+    .movie-info {
+        padding: 1rem;
+    }
+
+    .movie-title {
+        font-size: 1.3rem;
+    }
+
+    .card-actions .btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+
+    .instructions-card {
+        padding: 1rem;
+    }
+
+    .movie-meta {
+        gap: 0.5rem;
+    }
+}
+
+/* Design responsivo per dispositivi piccoli (smartphone) */
+@media (max-width: 480px) {
+    .card-stack {
+        max-width: 320px;
+        height: 500px;
+    }
+
+    .movie-poster {
+        height: 200px;
+    }
+
+    .swipe-indicator {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+    }
+
+    .like-indicator {
+        right: 10px;
+    }
+
+    .dislike-indicator {
+        left: 10px;
+    }
+}
+
+/* Effetto di stacking iniziale delle card senza JavaScript */
+.movie-card:nth-child(1) {
+    z-index: 5;
+    transform: scale(1);
+}
+
+.movie-card:nth-child(2) {
+    z-index: 4;
+    transform: scale(0.98) translateY(10px);
+    opacity: 0.9;
+}
+
+.movie-card:nth-child(3) {
+    z-index: 3;
+    transform: scale(0.96) translateY(20px);
+    opacity: 0.8;
+}
+
+.movie-card:nth-child(n+4) {
+    z-index: 2;
+    transform: scale(0.94) translateY(30px);
+    opacity: 0.7;
+}
+
+/* Animazione rimozione carta quando swipe effettuato */
+.movie-card.removing {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+}
+
+.movie-card.removing.liked {
+    /* Se "mi piace", la card scorre verso destra e ruota */
+    transform: translateX(100%) rotate(30deg);
+}
+
+.movie-card.removing.disliked {
+    /* Se "non mi piace", la card scorre verso sinistra e ruota */
+    transform: translateX(-100%) rotate(-30deg);
+}

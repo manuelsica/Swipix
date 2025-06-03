@@ -1,0 +1,587 @@
+{% extends "base.html" %}
+
+{% block title %}Tutte le Valutazioni - MovieFlix{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    {# Sezione Hero con sfondo e statistiche sulle valutazioni #}
+    <section class="hero-section preferences-hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="container text-center">
+                {# Titolo principale con icona #}
+                <h1 class="display-4 fw-bold mb-4">
+                    <i class="fas fa-list text-primary me-3"></i>
+                    Tutte le Tue Valutazioni
+                </h1>
+                {# Sottotitolo con invito a gestire le valutazioni #}
+                <p class="lead mb-4">Gestisci tutti i film che hai valutato - rimuovi quelli che vuoi rivalutare!</p>
+                {# Statistiche rapide: numero di film amati e scartati #}
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-heart text-danger"></i>
+                        <span>{{ liked_movies|length }} Film Amati</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-times text-muted"></i>
+                        <span>{{ disliked_movies|length }} Film Scartati</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# Sezione contenente le liste di film valutati #}
+    <section class="preferences-section py-5">
+        <div class="container">
+            {% if liked_movies or disliked_movies %}
+                {# Se esistono film amati, mostra la sezione "Film che Ami" #}
+                {% if liked_movies %}
+                <div class="preference-section mb-5">
+                    {# Intestazione della sezione con icona cuore #}
+                    <h3 class="section-title mb-4">
+                        <i class="fas fa-heart text-danger me-2"></i>Film che Ami ({{ liked_movies|length }})
+                    </h3>
+                    <div class="movies-grid">
+                        {# Ciclo sui film amati per creare le card #}
+                        {% for movie in liked_movies %}
+                        <div class="movie-grid-card" data-movie-id="{{ movie.id }}">
+                            <div class="movie-grid-poster">
+                                {# Immagine del poster del film #}
+                                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" loading="lazy">
+                                {# Overlay che compare al passaggio del mouse con pulsante di rimozione #}
+                                <div class="movie-grid-overlay">
+                                    <div class="movie-grid-actions">
+                                        <button class="btn btn-sm btn-outline-danger" onclick="removePreference({{ movie.id }}, this)" title="Rimuovi valutazione">
+                                            <i class="fas fa-heart-broken"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {# Punteggio del film visualizzato in alto a destra #}
+                                <div class="movie-grid-rating">
+                                    <i class="fas fa-star"></i>
+                                    <span>{{ movie.rating }}</span>
+                                </div>
+                                {# Badge per indicare che è un film "amato" #}
+                                <div class="preference-badge liked">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                            </div>
+
+                            <div class="movie-grid-info">
+                                {# Titolo del film #}
+                                <h5 class="movie-grid-title">{{ movie.title }}</h5>
+                                {# Meta informazioni: genere e anno #}
+                                <div class="movie-grid-meta">
+                                    <span class="genre">{{ movie.genre }}</span>
+                                    <span class="year">{{ movie.year }}</span>
+                                </div>
+                                {# Descrizione tagliata a 100 caratteri se più lunga #}
+                                <p class="movie-grid-description">
+                                    {{ movie.description[:100] }}{% if movie.description|length > 100 %}...{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {# Se esistono film scartati, mostra la sezione "Film Scartati" #}
+                {% if disliked_movies %}
+                <div class="preference-section">
+                    {# Intestazione della sezione con icona croce #}
+                    <h3 class="section-title mb-4">
+                        <i class="fas fa-times text-muted me-2"></i>Film Scartati ({{ disliked_movies|length }})
+                    </h3>
+                    <div class="movies-grid">
+                        {# Ciclo sui film scartati per creare le card #}
+                        {% for movie in disliked_movies %}
+                        <div class="movie-grid-card" data-movie-id="{{ movie.id }}">
+                            <div class="movie-grid-poster">
+                                {# Immagine del poster del film #}
+                                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" loading="lazy">
+                                {# Overlay che compare al passaggio del mouse con pulsante di rimozione #}
+                                <div class="movie-grid-overlay">
+                                    <div class="movie-grid-actions">
+                                        <button class="btn btn-sm btn-outline-success" onclick="removePreference({{ movie.id }}, this)" title="Rimuovi valutazione">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {# Punteggio del film visualizzato in alto a destra #}
+                                <div class="movie-grid-rating">
+                                    <i class="fas fa-star"></i>
+                                    <span>{{ movie.rating }}</span>
+                                </div>
+                                {# Badge per indicare che è un film "scartato" #}
+                                <div class="preference-badge disliked">
+                                    <i class="fas fa-times"></i>
+                                </div>
+                            </div>
+
+                            <div class="movie-grid-info">
+                                {# Titolo del film #}
+                                <h5 class="movie-grid-title">{{ movie.title }}</h5>
+                                {# Meta informazioni: genere e anno #}
+                                <div class="movie-grid-meta">
+                                    <span class="genre">{{ movie.genre }}</span>
+                                    <span class="year">{{ movie.year }}</span>
+                                </div>
+                                {# Descrizione tagliata a 100 caratteri se più lunga #}
+                                <p class="movie-grid-description">
+                                    {{ movie.description[:100] }}{% if movie.description|length > 100 %}...{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {# Pulsanti di azione: torna alla homepage o cancella tutte le valutazioni #}
+                <div class="text-center mt-5">
+                    <a href="{{ url_for('index') }}" class="btn btn-danger btn-lg me-3">
+                        <i class="fas fa-plus me-2"></i>Valuta Altri Film
+                    </a>
+                    <button class="btn btn-outline-light btn-lg" onclick="resetAllPreferences()">
+                        <i class="fas fa-refresh me-2"></i>Cancella Tutto
+                    </button>
+                </div>
+            {% else %}
+                {# Stato vuoto: nessuna valutazione ancora eseguita #}
+                <div class="empty-state">
+                    <div class="text-center">
+                        <i class="fas fa-clipboard-list mb-3"></i>
+                        <h4>Nessuna Valutazione</h4>
+                        <p class="text-muted">
+                            Non hai ancora valutato nessun film. Inizia a esplorare e trova i film che ami o che non ti piacciono!
+                        </p>
+                        <div class="mt-4">
+                            <a href="{{ url_for('index') }}" class="btn btn-danger btn-lg">
+                                <i class="fas fa-search me-2"></i>Inizia a Valutare
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+/**
+ * Rimuove la preferenza (like/dislike) del film e aggiorna la UI di conseguenza.
+ * movieId: ID del film da rimuovere
+ * button: riferimento al pulsante cliccato, per gestire lo stato di caricamento
+ */
+function removePreference(movieId, button) {
+    if (!confirm('Sei sicuro di voler rimuovere questa valutazione? Il film riapparirà nella lista dei film da valutare.')) {
+        return;
+    }
+
+    // Salva il contenuto originale del pulsante, per ripristinarlo poi
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    button.disabled = true;
+
+    // Invio della richiesta POST per rimuovere la preferenza
+    fetch(`/remove_preference/${movieId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Anima la rimozione della card: riduce scala e opacità
+            const movieCard = button.closest('.movie-grid-card');
+            movieCard.style.transform = 'scale(0.8)';
+            movieCard.style.opacity = '0';
+            movieCard.style.transition = 'all 0.3s ease';
+
+            setTimeout(() => {
+                movieCard.remove();
+                // Verifica se le sezioni sono diventate vuote e aggiorna di conseguenza
+                checkEmptySections();
+            }, 300);
+
+            // Mostra messaggio di conferma
+            showToast(data.message || 'Valutazione rimossa!', 'success');
+
+            // Aggiorna il conteggio dei film amati nella navbar
+            updateLikedCount();
+        } else {
+            // In caso di errore, ripristina il pulsante
+            button.innerHTML = originalContent;
+            button.disabled = false;
+            showToast('Errore nella rimozione della valutazione', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Ripristina stato del pulsante se errore di rete
+        button.innerHTML = originalContent;
+        button.disabled = false;
+        showToast('Errore di rete', 'error');
+    });
+}
+
+/**
+ * Controlla se le sezioni "Film che Ami" o "Film Scartati" sono vuote.
+ * Se entrambe le sezioni sono vuote, ricarica la pagina per mostrare lo stato vuoto.
+ */
+function checkEmptySections() {
+    const likedSection = document.querySelector('.preference-section:first-of-type .movies-grid');
+    const dislikedSection = document.querySelector('.preference-section:last-of-type .movies-grid');
+
+    let hasMovies = false;
+
+    if (likedSection && likedSection.children.length === 0) {
+        likedSection.closest('.preference-section').style.display = 'none';
+    } else if (likedSection && likedSection.children.length > 0) {
+        hasMovies = true;
+    }
+
+    if (dislikedSection && dislikedSection.children.length === 0) {
+        dislikedSection.closest('.preference-section').style.display = 'none';
+    } else if (dislikedSection && dislikedSection.children.length > 0) {
+        hasMovies = true;
+    }
+
+    // Se non ci sono più film in nessuna sezione, ricarica per mostrare l'empty state
+    if (!hasMovies) {
+        location.reload();
+    }
+}
+
+/**
+ * Resetta tutte le preferenze dell'utente. Mostra overlay di caricamento e, al successo,
+ * mostra un toast e reindirizza dopo un breve ritardo.
+ */
+function resetAllPreferences() {
+    if (!confirm('Sei sicuro di voler cancellare TUTTE le tue valutazioni? Questa azione non può essere annullata.')) {
+        return;
+    }
+
+    // Mostra overlay di caricamento (o lo crea se non esiste)
+    const loadingOverlay = document.getElementById('loadingOverlay') || createLoadingOverlay();
+    loadingOverlay.style.display = 'flex';
+
+    fetch('/reset_preferences', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        loadingOverlay.style.display = 'none';
+
+        if (data.success) {
+            showToast('Tutte le valutazioni sono state cancellate!', 'success');
+            // Reindirizza alla home dopo un secondo
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+        } else {
+            showToast('Errore nel cancellare le valutazioni', 'error');
+        }
+    })
+    .catch(error => {
+        loadingOverlay.style.display = 'none';
+        console.error('Error:', error);
+        showToast('Errore di rete', 'error');
+    });
+}
+
+/**
+ * Crea un overlay di caricamento se non presente nel DOM.
+ * Torna il riferimento all'elemento overlay.
+ */
+function createLoadingOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'loadingOverlay';
+    overlay.className = 'loading-overlay';
+    overlay.innerHTML = '<div class="loading-spinner"><i class="fas fa-film"></i></div>';
+    overlay.style.display = 'none';
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+/**
+ * Aggiorna il conteggio dei film amati nella barra di navigazione.
+ * Fa il fetch della home, analizza l'HTML e aggiorna l'elemento con id 'liked-count'.
+ */
+function updateLikedCount() {
+    fetch('/')
+    .then(response => response.text())
+    .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newCount = doc.querySelector('#liked-count');
+        if (newCount) {
+            const currentCount = document.querySelector('#liked-count');
+            if (currentCount) {
+                currentCount.textContent = newCount.textContent;
+            }
+        }
+    })
+    .catch(error => console.error('Error updating count:', error));
+}
+
+/**
+ * Mostra un toast di notifica in basso a destra.
+ * message: testo da visualizzare
+ * type: 'success' o 'error' per cambiare l'icona e lo stile
+ */
+function showToast(message, type = 'success') {
+    // Se non esiste ancora un toast, lo crea nel DOM
+    if (!document.getElementById('successToast')) {
+        const toastHtml = `
+            <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                <div id="successToast" class="toast" role="alert">
+                    <div class="toast-header">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <strong class="me-auto">Notifica</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body" id="toastMessage">
+                        ${message}
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', toastHtml);
+    }
+
+    const toast = document.getElementById('successToast');
+    const toastMessage = document.getElementById('toastMessage');
+    const toastIcon = toast.querySelector('.toast-header i');
+
+    toastMessage.textContent = message;
+
+    // Aggiorna l'icona in base al tipo di messaggio
+    if (type === 'error') {
+        toastIcon.className = 'fas fa-exclamation-circle text-danger me-2';
+    } else {
+        toastIcon.className = 'fas fa-check-circle text-success me-2';
+    }
+
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+</script>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+/* --------------------------------------------------
+   Stili specifici per la pagina di tutte le valutazioni
+---------------------------------------------------- */
+
+/* Hero di sfondo con gradiente blu per la pagina delle preferenze */
+.preferences-hero {
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    height: 40vh;
+    min-height: 300px;
+}
+
+/* Sezione che contiene le liste di film */
+.preference-section {
+    margin-bottom: 3rem;
+}
+
+/* Titolo di sezione con bordo inferiore sottile */
+.section-title {
+    color: hsl(var(--text-primary));
+    font-weight: 600;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid hsl(var(--border-color));
+}
+
+/* Griglia reattiva per mostrare le card dei film */
+.movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+/* Stile base per ogni card nella griglia */
+.movie-grid-card {
+    background: hsl(var(--background-card));
+    border-radius: 15px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid hsl(var(--border-color));
+    position: relative;
+}
+
+.movie-grid-card:hover {
+    /* Leggera sollevata e ombra più marcata al passaggio del mouse */
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px hsla(var(--shadow-color));
+}
+
+/* Badge circolare che indica se il film è amato o scartato */
+.preference-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8rem;
+    z-index: 2;
+}
+
+.preference-badge.liked {
+    background: var(--netflix-red);
+}
+
+.preference-badge.disliked {
+    background: #666;
+}
+
+/* Contenitore per il poster del film */
+.movie-grid-poster {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.movie-grid-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.movie-grid-card:hover .movie-grid-poster img {
+    /* Zoom sull'immagine al passaggio del mouse */
+    transform: scale(1.05);
+}
+
+/* Overlay semitrasparente con pulsanti di azione */
+.movie-grid-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.movie-grid-card:hover .movie-grid-overlay {
+    opacity: 1;
+}
+
+.movie-grid-actions .btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Etichetta della valutazione del film (stelle, punteggio) */
+.movie-grid-rating {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.movie-grid-rating i {
+    color: #FFD700;
+    font-size: 0.7rem;
+}
+
+/* Sezione informazioni (titolo, genere, anno, descrizione) */
+.movie-grid-info {
+    padding: 1.5rem;
+}
+
+.movie-grid-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: hsl(var(--text-primary));
+}
+
+.movie-grid-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.movie-grid-meta span {
+    font-size: 0.8rem;
+    color: hsl(var(--text-secondary));
+    background: hsl(var(--background-secondary));
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.movie-grid-meta .genre {
+    color: var(--netflix-red);
+    background: rgba(229, 9, 20, 0.1);
+}
+
+.movie-grid-description {
+    font-size: 0.9rem;
+    color: hsl(var(--text-secondary));
+    line-height: 1.4;
+    margin-bottom: 0;
+}
+
+/* Stili reattivi per tablet */
+@media (max-width: 768px) {
+    .movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .movie-grid-info {
+        padding: 1rem;
+    }
+
+    .preferences-hero {
+        height: 30vh;
+        min-height: 250px;
+    }
+}
+
+/* Stili reattivi per smartphone */
+@media (max-width: 480px) {
+    .movies-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}

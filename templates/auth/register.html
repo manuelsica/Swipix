@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Registrati - MovieFlix{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    {# Sezione di autenticazione a schermo intero #}
+    <section class="auth-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                {# Colonna centrale per il form di registrazione #}
+                <div class="col-md-8 col-lg-6">
+                    <div class="auth-card">
+                        <div class="auth-header">
+                            <h2 class="text-center mb-4">
+                                {# Icona e titolo della scheda di registrazione #}
+                                <i class="fas fa-film text-danger me-2"></i>
+                                Unisciti a MovieFlix
+                            </h2>
+                        </div>
+
+                        {# Flash Messages per errori o conferme #}
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="POST" class="auth-form">
+                            <div class="row">
+                                {# Campo Nome #}
+                                <div class="col-md-6 mb-3">
+                                    <label for="first_name" class="form-label">Nome</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="first_name" name="first_name">
+                                    </div>
+                                </div>
+
+                                {# Campo Cognome #}
+                                <div class="col-md-6 mb-3">
+                                    <label for="last_name" class="form-label">Cognome</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="last_name" name="last_name">
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# Campo Username obbligatorio (almeno 3 caratteri) #}
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-at"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="username" name="username" required>
+                                </div>
+                                <small class="form-text text-muted">Minimo 3 caratteri</small>
+                            </div>
+
+                            {# Campo Email obbligatorio #}
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                            </div>
+
+                            {# Campo Password obbligatorio (almeno 6 caratteri) #}
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                </div>
+                                <small class="form-text text-muted">Minimo 6 caratteri</small>
+                            </div>
+
+                            {# Campo Conferma Password obbligatorio #}
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">Conferma Password *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                </div>
+                            </div>
+
+                            {# Bottone per inviare la form di registrazione #}
+                            <button type="submit" class="btn btn-danger w-100 mb-3">
+                                <i class="fas fa-user-plus me-2"></i>Registrati
+                            </button>
+                        </form>
+
+                        {# Link per chi ha già un account: rimanda al login #}
+                        <div class="text-center">
+                            <p class="mb-0">Hai già un account?</p>
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light">
+                                <i class="fas fa-sign-in-alt me-2"></i>Accedi
+                            </a>
+                        </div>
+
+                        {# Link per continuare senza account #}
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('index') }}" class="text-muted">
+                                <i class="fas fa-arrow-left me-1"></i>Continua senza account
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+/* --------------------------------------------------
+   Stili specifici per la sezione di registrazione
+---------------------------------------------------- */
+
+/* Contenitore principale: intera altezza della finestra */
+.auth-section {
+    min-height: 100vh;
+    /* Gradiente di sfondo rosso in stile Netflix */
+    background: linear-gradient(135deg, var(--netflix-red) 0%, var(--netflix-dark-red) 100%);
+    display: flex;
+    align-items: center; /* Centra verticalmente */
+    padding: 2rem 0;
+}
+
+/* Scheda di registrazione: sfondo scuro, bordi arrotondati e ombra */
+.auth-card {
+    background: hsl(var(--background-card));
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 20px 40px hsla(var(--shadow-color));
+    border: 1px solid hsl(var(--border-color));
+}
+
+/* Titolo della scheda di registrazione */
+.auth-header h2 {
+    color: hsl(var(--text-primary));
+    font-weight: 700;
+}
+
+/* Etichette dei campi di input (colore e peso del font) */
+.form-label {
+    color: hsl(var(--text-secondary));
+    font-weight: 500;
+}
+
+/* Stile dei campi di input */
+.form-control {
+    background: hsl(var(--background-secondary));
+    border: 1px solid hsl(var(--border-color));
+    color: hsl(var(--text-primary));
+}
+
+/* Focus sui campi di input: bordo rosso Netflix e leggera ombra */
+.form-control:focus {
+    background: hsl(var(--background-secondary));
+    border-color: var(--netflix-red);
+    box-shadow: 0 0 0 0.2rem rgba(229, 9, 20, 0.25);
+    color: hsl(var(--text-primary));
+}
+
+/* Stile dell'input group (icone di supporto) */
+.input-group-text {
+    background: hsl(var(--background-secondary));
+    border: 1px solid hsl(var(--border-color));
+    color: hsl(var(--text-secondary));
+}
+
+/* Testo di supporto sotto i campi (es. note su lunghezza) */
+.form-text {
+    color: hsl(var(--text-muted));
+}
+
+/* Stile degli alert (messaggi flash) */
+.alert {
+    border-radius: 10px; /* Arrotonda gli angoli degli alert */
+}
+</style>
+{% endblock %}
