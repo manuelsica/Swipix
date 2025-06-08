@@ -5,6 +5,9 @@ from app import app, db
 from models import Movie, UserPreference
 from movie_data import initialize_movies
 from sqlalchemy import select
+from model.movierec.recommender_service import knn_model, features_df, merged_df
+from model.movierec.recommender import recommend_movies
+import mlflow, time
 
 
 @app.route('/')
@@ -51,10 +54,12 @@ def index():
 
     # Seleziona tutti i film che non sono nell’elenco di quelli valutati
     # dato che sono molti, vengono presi all'inizio alcuni casuali (circa 5)
-    available_movies = Movie.query.filter(
-            ~Movie.id.in_(rated_movie_ids)
-    ).all()
-
+    available_movies = (Movie.query
+         .filter(~Movie.id.in_(rated_movie_ids))
+         .order_by(db.func.random())   # un po’ di varietà
+         .limit(5)                     # max 5 card iniziali
+         .all())
+    
     # Mostra la pagina index.html passando i film disponibili e il conteggio dei "mi piace"
     return render_template('index.html', movies=available_movies, liked_count=liked_count)
 
@@ -252,3 +257,65 @@ def reset_preferences():
         db.session.commit()
 
     return jsonify({'success': True})
+
+@app.route('/recommend', methods=['POST'])
+def recommend():
+    # ------------------------------ #
+    # 1. Identifica la "chiave utente"
+    # ------------------------------ #
+    if current_user.is_authenticated:
+        user_key  = str(current_user.id)          # <── sempre stringa
+        filter_kw = {'user_id': current_user.id}
+    else:
+        user_key  = session['session_id']         # già str
+        filter_kw = {'session_id': user_key}
+
+    # ------------------------------ #
+    # 2. Conta quanti LIKE ha l'utente
+    # ------------------------------ #
+    liked_count = UserPreference.query.filter_by(**filter_kw, liked=True).count()
+
+    # ------------------------------ #
+    # 3. Se NON ha like, mostra 5 film random non ancora valutati
+    # ------------------------------ #
+    if liked_count == 0:
+        unrated_q = Movie.query.filter(
+            ~Movie.id.in_(db.session.query(UserPreference.movie_id).filter_by(**filter_kw))
+        )
+        movies = unrated_q.order_by(db.func.random()).limit(5).all()
+
+    # ----------------------------------------------------------------- #
+    # 4. Se HA almeno un like, prova a usare il modello KNN per consigli
+    # ----------------------------------------------------------------- #
+    else:
+        
+        if user_key in features_df.index:
+            t0 = time.perf_counter()
+            rec_ids = recommend_movies(user_key, knn_model, features_df, merged_df, top_k=5)
+            mlflow.log_metric("inference_ms", (time.perf_counter() - t0) * 1000)
+            movies = Movie.query.filter(Movie.id.in_(rec_ids)).all()
+            rec_ids = recommend_movies(user_key, knn_model, features_df, merged_df, top_k=5)
+            movies  = Movie.query.filter(Movie.id.in_(rec_ids)).all()
+        else:
+            # Utente ancora non presente nel modello (caso raro):
+            # fallback su 5 random diversi da quelli già valutati
+            movies = (Movie.query
+                      .filter(~Movie.id.in_(db.session.query(UserPreference.movie_id)
+                                            .filter_by(**filter_kw)))
+                      .order_by(db.func.random())
+                      .limit(5).all())
+
+    # ------------------------------ #
+    # 5. Serializza risposta JSON
+    # ------------------------------ #
+    return jsonify([
+        {
+            'id':        m.id,
+            'title':     m.title,
+            #'poster_url': m.poster_url,
+            'rating':    m.rating,
+            'genre':     m.genre,
+            'year':      m.year,
+            #'director':  m.director
+        } for m in movies
+    ])

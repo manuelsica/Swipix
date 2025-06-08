@@ -7,7 +7,7 @@ import os
 
 def train_knn(features: pd.DataFrame, n_neighbors=5, experiment_name="KNN_Experiment") -> NearestNeighbors:
     
-    knn = NearestNeighbors(n_neighbors=n_neighbors, metric='euclidean')
+    knn = NearestNeighbors(n_neighbors=n_neighbors, metric='cosine')
     knn.fit(features)
         
         # log parametri

@@ -22,19 +22,29 @@ def load_sampled_movies_and_ratings(movies_path, ratings_path, n_movies=200, n_u
 
     return sampled_movies, filtered_ratings, all_movies
 
-def load_data(n_movies = 200, n_users =40):
-    movies_path = os.path.join(os.getcwd(), "model/data/movies.csv")
-    ratings_path = os.path.join(os.getcwd(), "model/data/ratings.csv")
+def load_data(n_movies=200, n_users=40):
+    movies_path   = os.path.join(os.getcwd(), "model/data/movies.csv")
+    ratings_path  = os.path.join(os.getcwd(), "model/data/ratings.csv")
 
-    sampled_movies, filtered_ratings, all_movies = load_sampled_movies_and_ratings(
-            movies_path, ratings_path,
-            n_movies=n_movies,
-            n_users_per_movie=n_users,
-            random_seed=42
+    sampled_movies, filtered_ratings, _ = load_sampled_movies_and_ratings(
+        movies_path, ratings_path,
+        n_movies=n_movies,
+        n_users_per_movie=n_users,
+        random_seed=42
     )
 
-    
-    merged = filtered_ratings.merge(sampled_movies, on='movieId')
-    merged['movieId'] = merged['movieId'].astype(str)
-    print(merged.head)
-    return sampled_movies, filtered_ratings, merged
+    # --------------------------------------------------------------
+    # PIVOT: righe = userId, colonne = movieId, valori = rating
+    # --------------------------------------------------------------
+    pivot_table = (
+        filtered_ratings
+        .pivot_table(index="userId",
+                     columns="movieId",
+                     values="rating")
+        .astype(float)      # assicura numerico
+    )
+
+    # opzionale: riempi i NaN con 0 se preferisci una matrice densa
+    # pivot_table = pivot_table.fillna(0)
+
+    return sampled_movies, filtered_ratings, pivot_table

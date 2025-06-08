@@ -121,6 +121,10 @@
                                 </button>
                             </div>
                         </div>
+
+                        <button id="generateBtn" class="btn btn-primary">
+                            <i class="fas fa-sync-alt me-1"></i>Genera altri film
+                        </button>
                     </div>
                 </div>
             {% else %}
@@ -160,6 +164,10 @@
 {% endblock %}
 
 {% block extra_scripts %}
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
 <script>
 // Inizializza la funzionalità di swipe
 document.addEventListener('DOMContentLoaded', function() {

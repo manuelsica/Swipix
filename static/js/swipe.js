@@ -223,12 +223,12 @@ class SwipeHandler {
     }
 
     checkForEmptyState() {
-        // Se non ci sono più card visibili, mostra lo stato "vuoto"
-        const remainingCards = this.cardStack.querySelectorAll('.movie-card:not(.removing)');
-        if (remainingCards.length === 0) {
+        const remaining = this.cardStack.querySelectorAll('.movie-card:not(.removing)');
+        if (remaining.length === 0) {
             document.getElementById('emptyState').style.display = 'block';
         }
-    }
+}
+
 
     rateMovie(movieId, liked) {
         // Mostra un overlay di caricamento (se presente)
