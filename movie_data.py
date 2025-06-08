@@ -1,6 +1,7 @@
 from app import db
 from models import Movie
-
+from model.src.load_data import load_data
+import pandas as pd
 
 def initialize_movies():
     """
@@ -9,6 +10,7 @@ def initialize_movies():
     """
 
     # Elenco di film con dati reali e dettagliati
+    """
     movies_data = [
         {
             'title': 'The Shawshank Redemption',
@@ -214,14 +216,39 @@ def initialize_movies():
             'duration': 124
         }
     ]
+    """
+
+
 
     # Itera sulla lista di dizionari, crea un'istanza di Movie per ciascun film e la aggiunge alla sessione
-    for movie_data in movies_data:
-        movie = Movie(**movie_data)
-        db.session.add(movie)
+    movies, ratings, pivot_table = load_data()
+    #movies = list(movies)
+    print(ratings.columns)
+   # db.drop_all()
+    #db.create_all()
+    #for movie_data in movies_data:
+    for _, movie_data in movies.iterrows():
+        
+        exist = Movie.query.filter_by(title=movie_data['title']).first()
+        if exist is None:
+            mean_rating = ratings[ratings['movieId'] == movie_data['movieId']]['rating'].mean() or 0.0
+            year_str = movie_data['title'][-5:-1]
+            movie = Movie(
+                id=movie_data['movieId'],
+                title=movie_data['title'],
+                genre=movie_data['genres'],
+                rating = 0.0 if pd.isna(mean_rating) else mean_rating,
+                year = int(year_str)
+            )
+            db.session.add(movie)
+    
+
 
     # Salva tutte le modifiche nel database
     db.session.commit()
 
     # Messaggio di conferma sul terminale per indicare quanti film sono stati inseriti
-    print(f"Inizializzati {len(movies_data)} film nel database")
+    print(f"Inizializzati {len(movies)} film nel database")
+
+    #scegli i primi 5 film che l'utente deve 'recensire' per poi fare la raccomandazioni personali pian piano
+    

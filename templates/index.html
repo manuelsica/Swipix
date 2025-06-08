@@ -58,11 +58,11 @@
                             <div class="movie-info">
                                 <h3 class="movie-title">{{ movie.title }}</h3>
                                 <div class="movie-meta">
-                                    <span class="genre">{{ movie.genre }}</span>
-                                    <span class="year">{{ movie.year }}</span>
-                                    <span class="duration">{{ movie.duration }}min</span>
+                                    <span class="genre">{{ movie.genre.replace('|', ', ' ) }}</span>
+                                    <span class="year">{{ movie.title[-5:-1]}}</span>
+                                   <!-- <span class="duration">{{ movie.duration }}</span> -->
                                 </div>
-                                <p class="movie-description">{{ movie.description }}</p>
+                               <!-- <p class="movie-description">{{ movie.description }}</p> -->
                                 <div class="movie-director">
                                     <i class="fas fa-user-tie me-1"></i>
                                     Diretto da {{ movie.director }}

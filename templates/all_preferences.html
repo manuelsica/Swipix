@@ -77,9 +77,7 @@
                                     <span class="year">{{ movie.year }}</span>
                                 </div>
                                 {# Descrizione tagliata a 100 caratteri se più lunga #}
-                                <p class="movie-grid-description">
-                                    {{ movie.description[:100] }}{% if movie.description|length > 100 %}...{% endif %}
-                                </p>
+                              
                             </div>
                         </div>
                         {% endfor %}
@@ -129,9 +127,7 @@
                                     <span class="year">{{ movie.year }}</span>
                                 </div>
                                 {# Descrizione tagliata a 100 caratteri se più lunga #}
-                                <p class="movie-grid-description">
-                                    {{ movie.description[:100] }}{% if movie.description|length > 100 %}...{% endif %}
-                                </p>
+                              
                             </div>
                         </div>
                         {% endfor %}

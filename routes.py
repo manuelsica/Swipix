@@ -4,6 +4,7 @@ import uuid
 from app import app, db
 from models import Movie, UserPreference
 from movie_data import initialize_movies
+from sqlalchemy import select
 
 
 @app.route('/')
@@ -18,8 +19,8 @@ def index():
     - Calcola il numero di film apprezzati (liked) e lo mostra nella UI.
     """
     # Se non ci sono film nel database, inizializza con una lista predefinita
-    if Movie.query.count() == 0:
-        initialize_movies()
+    #if Movie.query.count() == 0:
+    initialize_movies() #sostituire con un servizio che chiama sta funzione
 
     # Blocchi separati per utenti autenticati vs anonimi
     if current_user.is_authenticated:
@@ -49,8 +50,9 @@ def index():
         ).count()
 
     # Seleziona tutti i film che non sono nell’elenco di quelli valutati
+    # dato che sono molti, vengono presi all'inizio alcuni casuali (circa 5)
     available_movies = Movie.query.filter(
-        ~Movie.id.in_(rated_movie_ids)
+            ~Movie.id.in_(rated_movie_ids)
     ).all()
 
     # Mostra la pagina index.html passando i film disponibili e il conteggio dei "mi piace"

@@ -55,11 +55,13 @@ class Movie(db.Model):
     # Titolo del film (obbligatorio, fino a 200 caratteri)
     title = db.Column(db.String(200), nullable=False)
     # Genere del film (obbligatorio, fino a 100 caratteri)
-    genre = db.Column(db.String(100), nullable=False)
+    genre = db.Column(db.String(200), nullable=False)
     # Anno di uscita del film (obbligatorio, intero)
     year = db.Column(db.Integer, nullable=False)
-    # Valutazione del film (obbligatorio, float)
+
+    #Valutazione del film (obbligatorio, float)
     rating = db.Column(db.Float, nullable=False)
+    """
     # Descrizione testuale del film (opzionale)
     description = db.Column(db.Text)
     # URL del poster del film (opzionale, fino a 500 caratteri)
@@ -70,6 +72,8 @@ class Movie(db.Model):
     duration = db.Column(db.Integer)
     # Data di inserimento del film nel database (valorizzata automaticamente)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    """
+   
 
 class UserPreference(db.Model):
     """
