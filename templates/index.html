@@ -164,14 +164,17 @@
 {% endblock %}
 
 {% block extra_scripts %}
+  <script>
+    // Variabili globali per main.js
+    const USER_KEY = "{{ current_user.id if current_user.is_authenticated else session['session_id'] }}";
+    const TOP_K    = 5;
+  </script>
+  <!-- Defer assicura che il DOM sia pronto -->
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+  <script defer>
+    // Solo per sicuro, inizializza lo swipe al caricamento
+    document.addEventListener('DOMContentLoaded', () => initializeSwipe());
+  </script>
 
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
-<script>
-// Inizializza la funzionalità di swipe
-document.addEventListener('DOMContentLoaded', function() {
-    initializeSwipe();
-});
-</script>
 {% endblock %}

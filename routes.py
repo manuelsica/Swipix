@@ -4,12 +4,11 @@ import uuid
 from app import app, db
 from models import Movie, UserPreference
 from movie_data import initialize_movies
-from sqlalchemy import select
-from model.movierec.recommender_service import knn_model, features_df, merged_df
-from model.movierec.recommender import recommend_movies
-import mlflow, time
+import os
 
+import requests
 
+RECOMMENDER_URL = os.getenv('RECOMMENDER_URL', 'http://localhost:8000')
 @app.route('/')
 def index():
     """
@@ -258,64 +257,30 @@ def reset_preferences():
 
     return jsonify({'success': True})
 
-@app.route('/recommend', methods=['POST'])
-def recommend():
-    # ------------------------------ #
-    # 1. Identifica la "chiave utente"
-    # ------------------------------ #
-    if current_user.is_authenticated:
-        user_key  = str(current_user.id)          # <── sempre stringa
-        filter_kw = {'user_id': current_user.id}
-    else:
-        user_key  = session['session_id']         # già str
-        filter_kw = {'session_id': user_key}
+@app.route('/recommendations', methods=['POST'])
+def recommendations():
+    # 1) Legge il JSON dal body
+    payload = request.get_json(force=True)
+    app.logger.debug(f"Flask received payload: {payload!r}")
 
-    # ------------------------------ #
-    # 2. Conta quanti LIKE ha l'utente
-    # ------------------------------ #
-    liked_count = UserPreference.query.filter_by(**filter_kw, liked=True).count()
-
-    # ------------------------------ #
-    # 3. Se NON ha like, mostra 5 film random non ancora valutati
-    # ------------------------------ #
-    if liked_count == 0:
-        unrated_q = Movie.query.filter(
-            ~Movie.id.in_(db.session.query(UserPreference.movie_id).filter_by(**filter_kw))
+    # 2) Inoltra esattamente lo stesso JSON al microservizio FastAPI
+    try:
+        resp = requests.post(
+            f'{RECOMMENDER_URL}/recommend',
+            json=payload,
+            timeout=5
         )
-        movies = unrated_q.order_by(db.func.random()).limit(5).all()
+    except requests.exceptions.RequestException as e:
+        app.logger.error(f"Error connecting to recommender service at {RECOMMENDER_URL}: {e}")
+        return jsonify({'error': 'Service unavailable'}), 503
 
-    # ----------------------------------------------------------------- #
-    # 4. Se HA almeno un like, prova a usare il modello KNN per consigli
-    # ----------------------------------------------------------------- #
-    else:
-        
-        if user_key in features_df.index:
-            t0 = time.perf_counter()
-            rec_ids = recommend_movies(user_key, knn_model, features_df, merged_df, top_k=5)
-            mlflow.log_metric("inference_ms", (time.perf_counter() - t0) * 1000)
-            movies = Movie.query.filter(Movie.id.in_(rec_ids)).all()
-            rec_ids = recommend_movies(user_key, knn_model, features_df, merged_df, top_k=5)
-            movies  = Movie.query.filter(Movie.id.in_(rec_ids)).all()
-        else:
-            # Utente ancora non presente nel modello (caso raro):
-            # fallback su 5 random diversi da quelli già valutati
-            movies = (Movie.query
-                      .filter(~Movie.id.in_(db.session.query(UserPreference.movie_id)
-                                            .filter_by(**filter_kw)))
-                      .order_by(db.func.random())
-                      .limit(5).all())
+    app.logger.debug(f"Forwarded to FastAPI, got {resp.status_code}: {resp.text}")
 
-    # ------------------------------ #
-    # 5. Serializza risposta JSON
-    # ------------------------------ #
-    return jsonify([
-        {
-            'id':        m.id,
-            'title':     m.title,
-            #'poster_url': m.poster_url,
-            'rating':    m.rating,
-            'genre':     m.genre,
-            'year':      m.year,
-            #'director':  m.director
-        } for m in movies
-    ])
+    # 3) Propaga status e body al client
+    try:
+        data = resp.json()
+    except ValueError:
+        app.logger.error("Invalid JSON from recommender service")
+        return jsonify({'error': 'Invalid response from recommender'}), 502
+
+    return jsonify(data), resp.status_code

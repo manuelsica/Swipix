@@ -6,6 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_migrate import Migrate
 
 # Configurazione del logging per il debug dell’applicazione
 logging.basicConfig(level=logging.DEBUG)
@@ -20,8 +21,10 @@ class Base(DeclarativeBase):
 # Inizializzazione di SQLAlchemy specificando Base come classe modello
 db = SQLAlchemy(model_class=Base)
 
+
 # Creazione dell’istanza Flask
 app = Flask(__name__)
+migrate = Migrate(app, db)
 
 # Imposta la chiave segreta per la gestione delle sessioni:
 # - Se è definita nella variabile d’ambiente SESSION_SECRET, la usa
@@ -84,4 +87,4 @@ if __name__ == '__main__':
     # - host '0.0.0.0' significa "ascolta su tutte le interfacce di rete"
     # - porta 5000 è la porta di default per lo sviluppo
     # - debug=True abilita il riavvio automatico e mostra eventuali errori in dettaglio
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=4080, debug=True)

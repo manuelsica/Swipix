@@ -1,0 +1,16 @@
+FROM python:3.9-slim
+
+# 1) Imposta la working directory
+WORKDIR /app
+
+# 2) Copia tutto il contenuto della root (inclusi main.py, requirements.txt, model/, movierec/, ecc.)
+COPY . /app
+
+# 3) Installa le dipendenze
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 4) Esponi la porta (quella che usi in docker-compose)
+EXPOSE 4080
+
+# 5) Comando di avvio
+CMD ["python", "main.py"]

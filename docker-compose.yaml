@@ -1,0 +1,32 @@
+version: '3.8'
+services:
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+    ports:
+      - '5001:5001'
+    volumes:
+      - ./mlruns:/mlruns
+
+  recommender:
+    build:
+      context: .
+      dockerfile: Dockerfile       # il tuo Dockerfile del microservizio
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./model/knn_model.pkl:/app/model/knn_model.pkl
+      - ./model/data:/app/model/data
+
+  web:
+    environment:
+      - RECOMMENDER_URL=http://recommender:8000
+    build:
+      context: .
+      dockerfile: Dockerfile.web   # il nuovo Dockerfile per il front-end
+    ports:
+      - '4080:4080'
+    depends_on:
+      - recommender

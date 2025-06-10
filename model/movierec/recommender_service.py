@@ -1,103 +1,104 @@
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import os
 import pickle
+import random
+
 import pandas as pd
-from sklearn.neighbors import NearestNeighbors
-from sklearn.preprocessing import MinMaxScaler
+import mlflow
+from mlflow.pyfunc import load_model
+from mlflow.exceptions import RestException
+
 from model.src.load_data import load_data
-import mlflow, time, os, subprocess, sys, platform
+from model.src.data_preparation import preprocess_genres
+from model.src.embeddings import compute_user_genre_preferences, create_final_features
+from model.movierec.recommender import recommend_movies
 
-# --------------------------------------------------
-# 1. Carica i dati di base
-# --------------------------------------------------
-movies_df, ratings_df, pivot_table = load_data()
-#   pivot_table: indice = userId / sessionId, colonne = movieId
+# ───── Configuration ─────
+mlflow.set_tracking_uri("http://mlflow:5001")
 
-# --------------------------------------------------
-# 2. One-hot encoding dei generi (film × genere)
-# --------------------------------------------------
-genres_onehot = (
-    movies_df[['movieId', 'genres']]
-    .assign(genres=lambda df: df.genres.str.split('|'))
-    .explode('genres')
+# ───── Data Loading & Preprocessing ─────
+movies_df, ratings_df, pivot = load_data(
+    
 )
-genres_onehot = pd.get_dummies(genres_onehot, columns=['genres'])
-genres_onehot = genres_onehot.groupby('movieId').sum()
-
-# Assicura che gli indici abbiano lo stesso tipo (int)
-pivot_table.columns = pivot_table.columns.astype(int)
-genres_onehot.index = genres_onehot.index.astype(int)
-
-# Reindicizza genres_onehot in modo che l’ordine e la lunghezza
-# coincidano esattamente con le colonne di pivot_table;
-# i film mancanti vengono riempiti con zeri.
-genres_onehot = genres_onehot.reindex(pivot_table.columns, fill_value=0)
-
-# --------------------------------------------------
-# 3. Profilo utente sui generi  (user × film) · (film × genere)
-# --------------------------------------------------
-user_genre_pref = pivot_table.dot(genres_onehot)
-
-# --------------------------------------------------
-# 4. Normalizzazione 0-1 (stessa istanza di scaler per coerenza)
-# --------------------------------------------------
-scaler = MinMaxScaler()
-
-user_genre_pref = pd.DataFrame(
-    scaler.fit_transform(user_genre_pref),
-    index=user_genre_pref.index,
-    columns=user_genre_pref.columns
+movies_df, genre_cols = preprocess_genres(movies_df)
+ratings_with_genres = ratings_df.merge(
+    movies_df[['movieId'] + genre_cols], on='movieId', how='left'
+).fillna(0)
+user_genre_pref = compute_user_genre_preferences(
+    ratings_with_genres, genre_cols, rating_threshold=3.0
 )
+features_df = create_final_features(pivot, user_genre_pref)
 
-user_ratings_norm = pd.DataFrame(
-    scaler.fit_transform(pivot_table.fillna(0)),
-    index=pivot_table.index,
-    columns=pivot_table.columns
-)
-
-# Feature finali = rating + genere
-features_df = pd.concat([user_ratings_norm, user_genre_pref], axis=1)
-features_df.columns = features_df.columns.astype(str)
-features_df = features_df.fillna(0)
-# -------------- NOVITÀ --------------\n# Indice utenti (userId / sessionId) tutto stringa → confronto uniforme
-features_df.index = features_df.index.astype(str)
-# ------------------------------------
-
-
-# Copia di movies_df per altre funzioni (es. conteggio generi)
-merged_df = movies_df.copy()
-
-#ML FLOW TRACKINGGGG
-
-mlflow.set_experiment("KNN-Recommender")
-
-with mlflow.start_run(run_name="build_knn"):
-    # parametri e contesto
-    mlflow.log_params({
-        "n_neighbors": 6,
-        "metric":      "cosine",
-        "n_users":     features_df.shape[0],
-        "n_items":     features_df.shape[1],
-        "git_sha":     subprocess.check_output(
-                           ["git", "rev-parse", "HEAD"]).strip().decode(),
-        "python":      sys.version.split()[0],
-        "platform":    platform.platform()
-    })
-
-    start = time.time()
-# --------------------------------------------------
-# 6. Modello KNN (cosine distance)
-# --------------------------------------------------
-MODEL_PATH = os.path.join(os.getcwd(), 'model/knn_model.pkl')
-
+# ───── Model Loading with Fallback ─────
+MODEL_REGISTRY_URI = 'models:/BestKNNRecommender/Production'
+LOCAL_MODEL_PATH = os.path.join(os.getcwd(), 'model/knn_model.pkl')
 try:
-    with open(MODEL_PATH, 'rb') as f:
+    knn_model = load_model(MODEL_REGISTRY_URI)
+    print(f"Loaded model from registry: {MODEL_REGISTRY_URI}")
+except RestException:
+    with open(LOCAL_MODEL_PATH, 'rb') as f:
         knn_model = pickle.load(f)
-except FileNotFoundError:
-    knn_model = NearestNeighbors(n_neighbors=6, metric='cosine')
-    knn_model.fit(features_df)
-    with open(MODEL_PATH, 'wb') as f:
-        pickle.dump(knn_model, f)
+    print(f"Registry model not found, loaded local model from: {LOCAL_MODEL_PATH}")
 
-# --------------------------------------------------
-# 7. Esportazioni
-# --------------------------------------------------
-__all__ = ['knn_model', 'features_df', 'merged_df']
+# ───── FastAPI Service ─────
+app = FastAPI()
+from typing import List, Optional
+class RequestBody(BaseModel):
+    user_id: str
+    top_k: int = 5
+    # NUOVO: lista di movieId che l'utente ha messo "like" nella fase random
+    liked_movies: Optional[List[int]] = None
+
+@app.post('/recommend')
+def recommend_api(body: RequestBody):
+    # Primo caso: new_user senza liked_movies
+    if body.user_id not in features_df.index and not body.liked_movies:
+        # 5 film a caso
+        random_ids = movies_df['movieId'].sample(n=body.top_k).tolist()
+        return {'new_user': True, 'recommendations': random_ids}
+
+    # Seconda chiamata: new_user con liked_movies
+    if body.user_id not in features_df.index and body.liked_movies:
+        # Costruisco dinamicamente un feature vector dal solo liked_movies
+        # 1) riga vuota sulle colonne pivot
+        user_ratings = pd.Series(0, index=pivot.columns)
+        for m in body.liked_movies:
+            if m in user_ratings.index:
+                user_ratings[m] = 5  # rating massimo per i liked
+        # 2) calcolo preferenze di genere
+        user_genre = user_ratings.dot(movies_df[['movieId'] + genre_cols].set_index('movieId'))
+        user_genre = user_genre.div(user_genre.sum()) if user_genre.sum()>0 else user_genre
+        # 3) componi il feature vector unendo rating e genere
+        vect = pd.concat([user_ratings, user_genre])
+        # 4) aggiungo in coda per interrogare la KNN
+        aug_feats = pd.concat([features_df, vect.to_frame().T], axis=0)
+        recs = recommend_movies(
+            user_id=vect.name or body.user_id,
+            knn_model=knn_model,
+            features_df=aug_feats,
+            movies_df=movies_df,
+            top_k=body.top_k
+        )
+        return {'new_user': False, 'recommendations': recs}
+
+    # Caso standard: utente già presente nel modello
+    recs = recommend_movies(
+        user_id=body.user_id,
+        knn_model=knn_model,
+        features_df=features_df,
+        movies_df=movies_df,
+        top_k=body.top_k
+    )
+    # Costruisci la risposta full-blown: lista di dict con i campi che ti servono
+    movie_dicts = []
+    for mid in recs:
+        row = movies_df.loc[movies_df['movieId'] == int(mid)].iloc[0]
+        movie_dicts.append({
+            'id':         int(row['movieId']),
+            'title':      row['title'],
+            'rating':     row.get('rating', 0),
+            'genre':      row['genres'],
+            'year':       row.get('year', ''),
+        })
+    return {'recommendations': movie_dicts, 'new_user': False}

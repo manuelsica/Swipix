@@ -1,0 +1,31 @@
+# Web API (Flask) e autenticazione
+Flask
+Flask-Login
+Flask-SQLAlchemy
+Flask-Migrate
+prometheus-flask-exporter
+
+# HTTP client
+requests
+
+# Server WSGI
+gunicorn
+
+# Data versioning e tracking
+dvc
+mlflow
+
+# Machine learning e data processing
+scikit-learn
+pandas
+numpy
+
+# FastAPI & ASGI server (per il microservizio Recommender)
+fastapi
+uvicorn
+
+# Database
+SQLAlchemy
+
+# Utility
+python-dotenv
