@@ -15,27 +15,44 @@ services:
     ports:
       - '5001:5001'
     volumes:
-      - ./mlruns:/app/mlruns   
+      - ./mlruns:/app/mlruns
+
+  trainer:
+    build:
+      context: .
+      dockerfile: Dockerfile.trainer
+    working_dir: /app
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./model/data:/app/model/data
+      - ./model:/app/model
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5001
+    depends_on:
+      - mlflow
+    command: ["python", "-m", "model.movierec.train_model"]
 
   recommender:
     build:
       context: .
-      dockerfile: Dockerfile       # il tuo Dockerfile del microservizio
+      dockerfile: Dockerfile
+    working_dir: /app
     ports:
       - '8000:8000'
     volumes:
-      - ./mlruns:/app/mlruns 
-      - ./model/knn_model.pkl:/app/model/knn_model.pkl
-      - ./model/data:/app/model/data
+      - ./mlruns:/app/mlruns
+      - ./model:/app/model
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5001
+    depends_on:
+      - mlflow
 
   web:
-    environment:
-      - RECOMMENDER_URL=http://recommender:8000
     build:
       context: .
-      dockerfile: Dockerfile.web   # il nuovo Dockerfile per il front-end
+      dockerfile: Dockerfile.web
+    environment:
+      - RECOMMENDER_URL=http://recommender:8000
     ports:
       - '4080:4080'
     depends_on:
