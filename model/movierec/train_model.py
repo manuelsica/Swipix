@@ -31,7 +31,8 @@ from model.movierec.recommender import recommend_movies
 from model.src.evaluation import compute_precision_at_k, compute_recall_at_k
 
 # ───────────── MLflow setup ─────────────
-mlflow.set_tracking_uri("http://mlflow:5001")
+mlflow_uri = os.environ.get("MLFLOW_TRACKING_URI", "http://mlflow:5001")
+mlflow.set_tracking_uri(mlflow_uri)
 mlflow.set_experiment("KNN-Recommender-GridSearch")
 
 # ───────────── Caricamento dati ─────────────

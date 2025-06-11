@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import os
 import pickle
-import random
+import random, time
 
 import pandas as pd
 import mlflow
@@ -15,11 +15,12 @@ from model.src.embeddings import compute_user_genre_preferences, create_final_fe
 from model.movierec.recommender import recommend_movies
 
 # ───── Configuration ─────
-mlflow.set_tracking_uri("http://mlflow:5001")
+mlflow_uri = os.environ.get("MLFLOW_TRACKING_URI", "http://mlflow:5001")
+mlflow.set_tracking_uri(mlflow_uri)
 
 # ───── Data Loading & Preprocessing ─────
 movies_df, ratings_df, pivot = load_data(
-    
+
 )
 movies_df, genre_cols = preprocess_genres(movies_df)
 ratings_with_genres = ratings_df.merge(
@@ -52,11 +53,23 @@ class RequestBody(BaseModel):
 
 @app.post('/recommend')
 def recommend_api(body: RequestBody):
+    start = time.time()
     # Primo caso: new_user senza liked_movies
     if body.user_id not in features_df.index and not body.liked_movies:
         # 5 film a caso
         random_ids = movies_df['movieId'].sample(n=body.top_k).tolist()
-        return {'new_user': True, 'recommendations': random_ids}
+        movie_dicts = []
+        for mid in random_ids:
+            row = movies_df.loc[movies_df['movieId'] == int(mid)].iloc[0]
+            movie_dicts.append({
+                'id':    int(row['movieId']),
+                'title': row['title'],
+                'rating': row.get('rating', 0),
+                'genre': row['genres'],
+                'year':  row.get('year', ''),
+            })
+        return {'recommendations': movie_dicts, 'new_user': True}
+
 
     # Seconda chiamata: new_user con liked_movies
     if body.user_id not in features_df.index and body.liked_movies:
@@ -80,7 +93,17 @@ def recommend_api(body: RequestBody):
             movies_df=movies_df,
             top_k=body.top_k
         )
-        return {'new_user': False, 'recommendations': recs}
+        movie_dicts = []
+        for mid in recs:
+            row = movies_df.loc[movies_df['movieId'] == int(mid)].iloc[0]
+            movie_dicts.append({
+                'id':    int(row['movieId']),
+                'title': row['title'],
+                'rating': row.get('rating', 0),
+                'genre': row['genres'],
+                'year':  row.get('year', ''),
+            })
+        return {'recommendations': movie_dicts, 'new_user': False}
 
     # Caso standard: utente già presente nel modello
     recs = recommend_movies(
@@ -101,4 +124,12 @@ def recommend_api(body: RequestBody):
             'genre':      row['genres'],
             'year':       row.get('year', ''),
         })
+
+    duration_ms = (time.time() - start) * 1000
+    with mlflow.start_run(nested=True):
+        mlflow.log_metric("inference_ms", duration_ms)
+        # Se vuoi, puoi anche loggare param user_id o top_k
+        mlflow.log_param("user_id", body.user_id)
+        mlflow.log_param("top_k", body.top_k)
+
     return {'recommendations': movie_dicts, 'new_user': False}

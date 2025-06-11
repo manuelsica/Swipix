@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
-from app import app, db
+from app import db
 from models import User
 import re
 
@@ -148,4 +148,6 @@ def logout():
 
 # Registra il Blueprint 'auth' con prefisso '/auth' in modo che tutte le rotte
 # definite sopra siano accessibili come '/auth/login', '/auth/register', ecc.
-app.register_blueprint(auth, url_prefix='/auth')
+def init_app(app):
+    """Register blueprint with the given Flask application."""
+    app.register_blueprint(auth, url_prefix='/auth')

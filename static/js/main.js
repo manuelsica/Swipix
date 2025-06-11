@@ -1,5 +1,4 @@
 // main.js
-
 document.addEventListener('DOMContentLoaded', () => {
   initializeSwipe();
 
@@ -42,7 +41,7 @@ function generateRecommendations() {
             <div class="movie-info">
               <h3 class="movie-title">${m.title}</h3>
               <div class="movie-meta">
-                <span class="genre">${m.genre.replace(/\|/g, ', ')}</span>
+                <span class="genre">${m.genre.join(', ')}</span>
                 <span class="year">${m.year}</span>
               </div>
             </div>

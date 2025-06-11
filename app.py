@@ -26,6 +26,8 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 migrate = Migrate(app, db)
 
+from auth import init_app as init_auth
+
 # Imposta la chiave segreta per la gestione delle sessioni:
 # - Se è definita nella variabile d’ambiente SESSION_SECRET, la usa
 # - Altrimenti, utilizza un valore di default che andrà cambiato in produzione
@@ -69,7 +71,7 @@ def load_user(user_id):
     from models import User
     return User.query.get(int(user_id))
 
-
+init_auth(app)
 with app.app_context():
     # All’interno del contesto dell’applicazione, importiamo:
     # - models: dove sono definiti i modelli (come la classe User)
@@ -80,7 +82,7 @@ with app.app_context():
     db.create_all()
 
 # Si importa il modulo auth dopo aver stabilito il context per evitare import circolari
-import auth
+
 
 if __name__ == '__main__':
     # Avvio del server Flask

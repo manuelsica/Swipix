@@ -21,8 +21,8 @@ def index():
     - Calcola il numero di film apprezzati (liked) e lo mostra nella UI.
     """
     # Se non ci sono film nel database, inizializza con una lista predefinita
-    #if Movie.query.count() == 0:
-    initialize_movies() #sostituire con un servizio che chiama sta funzione
+    if Movie.query.count() == 0:
+        initialize_movies() #sostituire con un servizio che chiama sta funzione
 
     # Blocchi separati per utenti autenticati vs anonimi
     if current_user.is_authenticated:

@@ -5,6 +5,9 @@ import mlflow
 import mlflow.sklearn
 import os
 
+mlflow_uri = os.environ.get("MLFLOW_TRACKING_URI", "http://mlflow:5001")
+mlflow.set_tracking_uri(mlflow_uri)
+
 def train_knn(features: pd.DataFrame, n_neighbors=5, experiment_name="KNN_Experiment") -> NearestNeighbors:
     
     knn = NearestNeighbors(n_neighbors=n_neighbors, metric='cosine')

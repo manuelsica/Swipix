@@ -5,10 +5,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.mlflow
+    working_dir: /app
+    command: >
+      mlflow server
+      --backend-store-uri /app/mlruns
+      --default-artifact-root /app/mlruns/artifacts
+      --host 0.0.0.0
+      --port 5001
     ports:
       - '5001:5001'
     volumes:
-      - ./mlruns:/mlruns
+      - ./mlruns:/app/mlruns   
 
   recommender:
     build:
@@ -17,8 +24,11 @@ services:
     ports:
       - '8000:8000'
     volumes:
+      - ./mlruns:/app/mlruns 
       - ./model/knn_model.pkl:/app/model/knn_model.pkl
       - ./model/data:/app/model/data
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5001
 
   web:
     environment:
